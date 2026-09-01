@@ -1,0 +1,12 @@
+allowBuilds:
+  "@parcel/watcher": true
+  esbuild: true
+  msgpackr-extract: true
+  unrs-resolver: true
+  workerd: true
+  "@prisma/engines": true
+  prisma: true
+  bcrypt: true
+
+overrides:
+  test-exclude: 8.0.0
