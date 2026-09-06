@@ -1,4 +1,7 @@
-import { Body, Controller, Delete, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Post, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import type { User } from "@prisma/client";
+import { CurrentUser } from "../auth/auth.decorator";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { ResponseUserDto } from "./dto/response-user.dto";
 import { UserService } from "./user.service";
@@ -16,8 +19,9 @@ export class UserController {
     return await this.userService.registerUser(body);
   }
 
-  @Delete(":email")
-  async removeUser(@Param("email") email: string): Promise<void> {
-    return await this.userService.removeUser(email);
+  @Delete()
+  @UseGuards(AuthGuard("jwt"))
+  async removeUser(@CurrentUser() user: User): Promise<void> {
+    return await this.userService.removeUser(user.email);
   }
 }
