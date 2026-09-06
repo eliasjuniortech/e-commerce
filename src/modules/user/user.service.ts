@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
+import { User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { AppException } from "../../shared/exceptions/app.exception";
 import { ErrorCode } from "../../shared/exceptions/error-code.enum";
@@ -28,6 +29,14 @@ export class UserService {
       },
     });
     return new ResponseUserDto(newUser.id, newUser.username, newUser.email, newUser.createdAt, newUser.updatedAt);
+  }
+
+  async findOneUser(email: string): Promise<User> {
+    const user = await this.prismaService.user.findFirst({ where: { email: email } });
+    if (!user) {
+      throw new AppException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.", HttpStatus.NOT_FOUND);
+    }
+    return user;
   }
 
   async removeUser(email: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Post, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import type { User } from "@prisma/client";
 import { CurrentUser } from "../auth/auth.decorator";
@@ -17,6 +17,12 @@ export class UserController {
   @Post()
   async registerUser(@Body() body: CreateUserDto): Promise<ResponseUserDto> {
     return await this.userService.registerUser(body);
+  }
+
+  @Get()
+  @UseGuards(AuthGuard("jwt"))
+  async findOneUser(@CurrentUser() user: User): Promise<User> {
+    return await this.userService.findOneUser(user.email);
   }
 
   @Delete()

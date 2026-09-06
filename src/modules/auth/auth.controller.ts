@@ -26,4 +26,10 @@ export class AuthController {
       message: "Login realizado com sucesso!",
     };
   }
+
+  @Post("logout")
+  async logout(@Res({ passthrough: true }) res: Response): Promise<{ message: string }> {
+    res.clearCookie("access_token");
+    return { message: "Volte sempre!" };
+  }
 }
