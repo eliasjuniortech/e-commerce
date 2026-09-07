@@ -20,13 +20,13 @@ export class UserController {
   }
 
   @Get()
-  @UseGuards(AuthGuard("jwt"))
-  async findOneUser(@CurrentUser() user: User): Promise<User> {
+  @UseGuards(AuthGuard("access_token"))
+  async findOneUser(@CurrentUser() user: User): Promise<ResponseUserDto> {
     return await this.userService.findOneUser(user.email);
   }
 
   @Delete()
-  @UseGuards(AuthGuard("jwt"))
+  @UseGuards(AuthGuard("access_token"))
   async removeUser(@CurrentUser() user: User): Promise<void> {
     return await this.userService.removeUser(user.email);
   }

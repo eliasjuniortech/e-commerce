@@ -1,5 +1,7 @@
-import { Body, Controller, Post, Res } from "@nestjs/common";
-import type { Response } from "express";
+import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import "dotenv/config";
+import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 
@@ -12,14 +14,20 @@ export class AuthController {
   }
 
   @Post("login")
-  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response): Promise<{ message: string }> {
-    const accessToken = await this.authService.login(body);
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) response: Response): Promise<{ message: string }> {
+    const tokens = await this.authService.login(body);
 
-    res.cookie("access_token", accessToken, {
+    response.cookie("access_token", tokens.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60,
+      maxAge: 15 * 60 * 1000,
+    });
+    response.cookie("refresh_token", tokens.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return {
@@ -27,9 +35,27 @@ export class AuthController {
     };
   }
 
+  @Post("refresh_token")
+  async refreshToken(@Req() req: Request, @Res({ passthrough: true }) response: Response): Promise<void> {
+    const refreshToken = req.cookies.refresh_token;
+    const access_token = await this.authService.refreshToken(refreshToken);
+
+    response.cookie("access_token", access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000,
+    });
+  }
+
   @Post("logout")
-  async logout(@Res({ passthrough: true }) res: Response): Promise<{ message: string }> {
-    res.clearCookie("access_token");
-    return { message: "Volte sempre!" };
+  @UseGuards(AuthGuard("access_token"))
+  async logout(@Res({ passthrough: true }) response: Response): Promise<{ message: string }> {
+    response.clearCookie("access_token");
+    response.clearCookie("refresh_token");
+
+    return {
+      message: "Volte sempre!",
+    };
   }
 }

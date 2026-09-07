@@ -9,7 +9,7 @@ import { ErrorCode } from "../../../shared/exceptions/error-code.enum";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class AccessTokenStrategy extends PassportStrategy(Strategy, "access_token") {
   private readonly prismaService: PrismaService;
 
   constructor(prismaService: PrismaService) {
@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET!,
+      secretOrKey: process.env.ACCESS_TOKEN!,
     });
     this.prismaService = prismaService;
   }
