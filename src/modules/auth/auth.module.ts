@@ -6,21 +6,17 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { AccessTokenStrategy } from "./strategy/access-token.strategy";
+import { RefreshTokenStrategy } from "./strategy/refresh-token.strategy";
 
 @Module({
   imports: [
     PrismaModule,
-    PassportModule.register({
-      defaultStrategy: "jwt",
-    }),
+    PassportModule,
     JwtModule.register({
       secret: process.env.ACCESS_TOKEN,
-      signOptions: {
-        expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
-      },
     }),
   ],
-  providers: [AuthService, AccessTokenStrategy],
+  providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

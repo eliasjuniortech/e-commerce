@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
-import { User } from "@prisma/client";
+import { Roles, User } from "@prisma/client";
 import "dotenv/config";
 import { Request } from "express";
 import { ExtractJwt, Strategy } from "passport-jwt";
@@ -25,7 +25,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "access_toke
     this.prismaService = prismaService;
   }
 
-  async validate(payload: { sub: string; email: string }): Promise<User> {
+  async validate(payload: { sub: string; email: string; role: Roles }): Promise<User> {
     const user = await this.prismaService.user.findFirst({ where: { id: payload.sub } });
     if (!user) {
       throw new AppException(ErrorCode.UNAUTHORIZED, "Usuário não autenticado.", HttpStatus.UNAUTHORIZED);

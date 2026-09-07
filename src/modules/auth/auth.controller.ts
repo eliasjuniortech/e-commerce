@@ -1,7 +1,9 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, Res, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import type { User } from "@prisma/client";
 import "dotenv/config";
-import type { Request, Response } from "express";
+import type { Response } from "express";
+import { CurrentUser } from "./auth.decorator";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 
@@ -21,7 +23,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
+      maxAge: 60 * 1000,
     });
     response.cookie("refresh_token", tokens.refresh_token, {
       httpOnly: true,
@@ -36,15 +38,15 @@ export class AuthController {
   }
 
   @Post("refresh_token")
-  async refreshToken(@Req() req: Request, @Res({ passthrough: true }) response: Response): Promise<void> {
-    const refreshToken = req.cookies.refresh_token;
-    const access_token = await this.authService.refreshToken(refreshToken);
+  @UseGuards(AuthGuard("refresh_token"))
+  async refreshToken(@CurrentUser() user: User, @Res({ passthrough: true }) response: Response): Promise<void> {
+    const access_token = await this.authService.createAccessToken(user.id, user.email, user.role);
 
     response.cookie("access_token", access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
+      maxAge: 60 * 1000,
     });
   }
 

@@ -7,7 +7,6 @@ import { AppException } from "../../shared/exceptions/app.exception";
 import { ErrorCode } from "../../shared/exceptions/error-code.enum";
 import { PrismaService } from "../prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
-import { Payload } from "./types/payload.type";
 
 @Injectable()
 export class AuthService {
@@ -36,7 +35,6 @@ export class AuthService {
 
     return await this.jwtService.signAsync(payload, {
       secret: process.env.ACCESS_TOKEN,
-      expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
     });
   }
   async createRefreshToken(id: string, email: string, role: Roles): Promise<string> {
@@ -44,22 +42,7 @@ export class AuthService {
 
     return await this.jwtService.signAsync(payload, {
       secret: process.env.REFRESH_TOKEN,
-      expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
     });
-  }
-
-  async refreshToken(refreshToken: string): Promise<string> {
-    try {
-      const payload: Payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env.REFRESH_TOKEN,
-      });
-      const user = await this.prismaService.user.findFirstOrThrow({ where: { id: payload.sub } });
-
-      const access_token = await this.createAccessToken(user.id, user.email, user.role);
-      return access_token;
-    } catch {
-      throw new AppException(ErrorCode.UNAUTHORIZED, "Refresh Token expirado ou inválido.", HttpStatus.UNAUTHORIZED);
-    }
   }
 
   // Validar se o usuário está cadastrado e se seus dados estão corretos.
