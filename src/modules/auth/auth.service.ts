@@ -35,6 +35,7 @@ export class AuthService {
 
     return await this.jwtService.signAsync(payload, {
       secret: process.env.ACCESS_TOKEN,
+      expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
     });
   }
   async createRefreshToken(id: string, email: string, role: Roles): Promise<string> {
@@ -42,6 +43,7 @@ export class AuthService {
 
     return await this.jwtService.signAsync(payload, {
       secret: process.env.REFRESH_TOKEN,
+      expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
     });
   }
 

@@ -14,6 +14,9 @@ import { RefreshTokenStrategy } from "./strategy/refresh-token.strategy";
     PassportModule,
     JwtModule.register({
       secret: process.env.ACCESS_TOKEN,
+      signOptions: {
+        expiresIn: Number(process.env.ACCESS_TOKEN),
+      },
     }),
   ],
   providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
