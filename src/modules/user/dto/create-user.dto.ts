@@ -2,33 +2,18 @@ import { IsEmail, IsNotEmpty, IsString, IsStrongPassword, Matches, MaxLength, Mi
 
 export class CreateUserDto {
   @IsString()
-  @IsNotEmpty({
-    message: "O nome é obrigatório.",
-  })
+  @IsNotEmpty()
   username: string;
 
   @IsEmail()
-  @IsNotEmpty({
-    message: "O e-mail é obrigatório.",
-  })
+  @IsNotEmpty()
   email: string;
 
   @IsString()
-  @IsNotEmpty({
-    message: "A senha é obrigatória.",
-  })
+  @IsNotEmpty()
   @MinLength(8)
-  @MaxLength(22, {
-    message: "A senha pode conter no máximo 22 caracteres.",
-  })
-  @IsStrongPassword({
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-    minSymbols: 1,
-  })
-  @Matches(/^[a-zA-Z0-9!@#?.%]+$/, {
-    message: "A senha contém caracteres não permitidos.",
-  })
+  @MaxLength(22)
+  @IsStrongPassword({ minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })
+  @Matches(/^[a-zA-Z0-9!@#?.%]+$/)
   password: string;
 }

@@ -7,6 +7,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UploadService } from "../upload/upload.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { ResponseUserDto } from "./dto/response-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdatePasswordDto } from "./dto/update-password.dto";
 
 @Injectable()
 export class UserService {
@@ -24,10 +26,9 @@ export class UserService {
       throw new AppException(ErrorCode.USER_ALREADY_EXISTS, "E-mail já cadastrado.", HttpStatus.CONFLICT);
     }
 
-    const name = data.username.split(" ")[0].toLowerCase();
-    const imagePath = file ? await this.uploadService.upload("avatars", data.email, name, file) : null;
+    const imagePath = file ? await this.uploadService.upload("avatars", data.email, "profile", file) : null;
 
-    const newUser = await this.prismaService.user.create({
+    const createdUser = await this.prismaService.user.create({
       data: {
         username: data.username,
         email: data.email,
@@ -35,26 +36,62 @@ export class UserService {
         imagePath: imagePath,
       },
     });
-    return new ResponseUserDto(newUser.id, newUser.username, newUser.email, newUser.imagePath, newUser.createdAt, newUser.updatedAt);
+    return new ResponseUserDto(createdUser.id, createdUser.username, createdUser.email, createdUser.imagePath, createdUser.createdAt, createdUser.updatedAt);
   }
 
-  async findOneUser(email: string): Promise<ResponseUserDto> {
-    const user = await this.prismaService.user.findFirst({ where: { email: email } });
+  async findUserByEmail(id: string) {
+    const user = await this.prismaService.user.findFirst({ where: { id: id } });
     if (!user) {
       throw new AppException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.", HttpStatus.NOT_FOUND);
     }
     return new ResponseUserDto(user.id, user.username, user.email, user.imagePath, user.createdAt, user.updatedAt);
   }
 
-  async removeUser(email: string): Promise<void> {
-    const user = await this.prismaService.user.findUnique({ where: { email: email } });
+  async updateUser(id: string, data: UpdateUserDto, file?: Express.Multer.File): Promise<ResponseUserDto> {
+    const user = await this.prismaService.user.findFirst({ where: { id: id } });
     if (!user) {
       throw new AppException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.", HttpStatus.NOT_FOUND);
     }
 
-    if (user.imagePath) {
+    const username = data.username ? data.username : user.username;
+
+    if (file && user.imagePath) {
       await this.uploadService.remove(user.imagePath);
     }
-    await this.prismaService.user.delete({ where: { id: user.id } });
+    const imagePath = file ? await this.uploadService.upload("avatars", user.email, "profile", file) : user.imagePath;
+
+    const updatedUser = await this.prismaService.user.update({
+      where: { id: id },
+      data: {
+        username: username,
+        imagePath: imagePath,
+      },
+    });
+    return new ResponseUserDto(updatedUser.id, updatedUser.username, updatedUser.email, updatedUser.imagePath, updatedUser.createdAt, updatedUser.updatedAt);
+  }
+
+  async removeUser(id: string): Promise<void> {
+    await this.prismaService.user.delete({ where: { id: id } });
+  }
+
+  async changePassword(id: string, data: UpdatePasswordDto): Promise<void> {
+    const user = await this.prismaService.user.findFirst({ where: { id: id } });
+
+    const isCurrentPasswordSame = await bcrypt.compare(data.currentPassword, user!.password);
+    if (!isCurrentPasswordSame) {
+      throw new AppException(ErrorCode.UNAUTHORIZED, "A senha está incorreta.", HttpStatus.UNAUTHORIZED);
+    }
+    const isNewPasswordSame = await bcrypt.compare(data.newPassword, user!.password);
+    if (isNewPasswordSame) {
+      throw new AppException(ErrorCode.CONFLICT, "A senha atual, não pode ser igual à senha antiga.", HttpStatus.CONFLICT);
+    }
+
+    const hash = await bcrypt.hash(data.newPassword, await bcrypt.genSalt());
+    await this.prismaService.user.update({
+      where: { id: id },
+      data: {
+        password: hash,
+      },
+    });
   }
 }

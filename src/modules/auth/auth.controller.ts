@@ -37,6 +37,17 @@ export class AuthController {
     };
   }
 
+  @Post("logout")
+  @UseGuards(AuthGuard("access_token"))
+  async logout(@Res({ passthrough: true }) response: Response): Promise<{ message: string }> {
+    response.clearCookie("access_token");
+    response.clearCookie("refresh_token");
+
+    return {
+      message: "Volte sempre!",
+    };
+  }
+
   @Post("refresh_token")
   @UseGuards(AuthGuard("refresh_token"))
   async refreshToken(@CurrentUser() user: User, @Res({ passthrough: true }) response: Response): Promise<void> {
@@ -48,16 +59,5 @@ export class AuthController {
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
     });
-  }
-
-  @Post("logout")
-  @UseGuards(AuthGuard("access_token"))
-  async logout(@Res({ passthrough: true }) response: Response): Promise<{ message: string }> {
-    response.clearCookie("access_token");
-    response.clearCookie("refresh_token");
-
-    return {
-      message: "Volte sempre!",
-    };
   }
 }
